@@ -5,3 +5,11 @@ This is usefull if you have to tunnel DNS through TCP-only tunnels. This respect
 was the requirement for the development of this tool. 
 
 Have a look at [this article on cypherpunk.at](https://www.cypherpunk.at/2013/04/dnsudp-to-tcp-translator/) for some details.
+
+# How to install
+
+```
+autoreconf -i
+./configure
+make
+```
