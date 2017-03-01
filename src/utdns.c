@@ -249,6 +249,7 @@ static int init_srv_socket(int family, int type, int port)
 
    SET_NONBLOCK(sock);
 
+// OS begins to listen with socket
    if (bind(sock, (struct sockaddr*) &sock_addr, len) == -1)
    {
       log_msg(LOG_ERR, "binding udp socket failed: %s", strerror(errno));
@@ -259,7 +260,8 @@ static int init_srv_socket(int family, int type, int port)
    return sock;
 }
 
-
+// fallback to TCP required in DNS reference
+// because large UDP packets = fragmentation is not reliable / has issues with firewalls
 static int init_tcp_socket(int family, int port)
 {
    int s;
@@ -495,6 +497,7 @@ static int dispatch_packets(int udp_sock, int tcp_sock, dns_trx_t *trx, int trx_
                {
                   inp->conn_state = CONN_STATE_SEND;
                   // set length header for DNS/TCP
+				  // htons: change byte order to network convention
                   *((uint16_t*) &inp->data[0]) = htons(inp->data_len);
                   inp->data_len += 2;
                   inp->time = time(NULL);
@@ -544,6 +547,9 @@ static int dispatch_packets(int udp_sock, int tcp_sock, dns_trx_t *trx, int trx_
             trx[i].data_len += len;
             log_msg(LOG_DEBUG, "received %d bytes on tcp socket %d", len, trx[i].dst_sock);
 
+			// for DNS over TCP, query size is added to the packet
+			// (not needed for UDP)
+			// do the same for QUIC
             if (trx[i].data_len - 2 == ntohs(*((uint16_t*) &trx[i].data[0])))
             {
                trx[i].data_len -= 2;
